@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clase Quest: Registro de Roles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@500;700&display=swap');
+
+        body {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            font-family: 'Rajdhani', sans-serif;
+            background-image: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, .gamified-title {
+            font-family: 'Press Start 2P', cursive;
+            text-transform: uppercase;
+        }
+
+        .role-card {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 2px solid #334155;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .role-card:hover {
+            transform: translateY(-5px);
+            border-color: #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+        }
+
+        .role-card.selected {
+            border-color: #10b981;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+            background: linear-gradient(145deg, #064e3b, #0f172a);
+        }
+
+        .role-card.selected .icon-container {
+            color: #10b981;
+        }
+
+        .submit-btn {
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            background-size: 200% auto;
+            transition: 0.5s;
+        }
+
+        .submit-btn:hover {
+            background-position: right center;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
+        }
+
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #8b5cf6; }
+        
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #10b981; /* Verde por defecto */
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 50;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.7rem;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        .toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+
+        /* Animación para ganar XP */
+        @keyframes popXP {
+            0% { transform: scale(1); color: #60a5fa; }
+            50% { transform: scale(1.5); color: #facc15; }
+            100% { transform: scale(1); color: #60a5fa; }
+        }
+        .animate-xp { animation: popXP 0.8s ease-in-out; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-3xl md:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-4 tracking-wider" style="line-height: 1.5;">Quest Log de Clase</h1>
+            <p class="text-xl text-gray-400">Selecciona tu rol de la partida y reporta tu misión del día.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Columna Izquierda: Perfil y Formulario -->
+            <div class="lg:col-span-1 order-last lg:order-first space-y-6">
+                
+                <!-- Panel de Perfil del Jugador -->
+                <div class="bg-slate-800 border-2 border-blue-500 rounded-xl p-6 shadow-[0_0_15px_rgba(59,130,246,0.4)]">
+                    <h2 class="text-xl text-blue-400 mb-4 text-center"><i class="fa-solid fa-id-badge mr-2"></i> Mi Perfil</h2>
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-16 h-16 rounded-full bg-slate-700 border-2 border-yellow-400 flex items-center justify-center text-2xl shadow-inner">
+                            <i class="fa-solid fa-user-astronaut text-gray-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white uppercase tracking-wide" id="profileName">Jugador</h3>
+                            <p class="text-sm text-yellow-400 font-bold">Nivel <span id="profileLevel">1</span> <span id="profileTitle" class="text-gray-400 text-xs font-normal ml-1">Novato</span></p>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-bold">
+                            <span class="text-gray-400 uppercase">XP Total</span>
+                            <span class="text-blue-400" id="xpTextContainer"><span id="profileXP">0</span> / <span id="profileNextXP">200</span> XP</span>
+                        </div>
+                        <div class="w-full bg-slate-900 h-3 rounded-full overflow-hidden border border-slate-700">
+                            <div id="profileProgress" class="bg-gradient-to-r from-blue-500 to-purple-500 h-full transition-all duration-700 ease-out" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel de Misión (Formulario) -->
+                <div class="bg-slate-800 border-2 border-purple-500 rounded-xl p-6 shadow-[0_0_15px_rgba(168,85,247,0.4)]">
+                    <h2 class="text-xl text-purple-400 mb-6 text-center"><i class="fa-solid fa-gamepad mr-2"></i> Reportar Misión</h2>
+                    
+                    <form id="questForm" class="space-y-6">
+                        <div>
+                            <label class="block text-gray-300 font-bold mb-2">Nombre del Jugador</label>
+                            <input type="text" id="playerName" required placeholder="Tu nombre..." class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                        </div>
+
+                        <div class="relative">
+                            <label class="block text-gray-300 font-bold mb-2">Grupo</label>
+                            <select id="playerGroup" required class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition appearance-none cursor-pointer pr-10">
+                                <option value="" disabled selected>Selecciona tu grupo...</option>
+                                <option value="201">201</option>
+                                <option value="202">202</option>
+                            </select>
+                            <div class="pointer-events-none absolute right-0 top-[38px] flex items-center px-4 text-blue-400">
+                                <i class="fa-solid fa-chevron-down text-sm"></i>
+                            </div>
+                        </div>
+
+                        <div class="relative">
+                            <label class="block text-gray-300 font-bold mb-2">Rol Seleccionado</label>
+                            <select id="roleSelect" required class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition appearance-none cursor-pointer pr-10">
+                                <option value="" disabled selected>Haz clic en una tarjeta o elige aquí...</option>
+                            </select>
+                            <div class="pointer-events-none absolute right-0 top-[38px] flex items-center px-4 text-blue-400">
+                                <i class="fa-solid fa-chevron-down text-sm"></i>
+                            </div>
+                        </div>
+
+                        <!-- Estadísticas del Personaje -->
+                        <div id="characterStats" class="hidden bg-slate-900/80 rounded-lg p-4 border border-slate-600 shadow-inner">
+                            <div class="flex justify-between items-center mb-3 border-b border-slate-700 pb-2">
+                                <span class="text-yellow-400 font-bold text-sm"><i class="fa-solid fa-star mr-1"></i> Recompensa: <span id="xpReward" class="text-white">0</span> XP</span>
+                                <span class="text-xs text-blue-300 uppercase tracking-wider font-bold"><i class="fa-solid fa-chart-simple mr-1"></i> Atributos</span>
+                            </div>
+                            <div class="space-y-2 text-xs font-bold text-gray-400">
+                                <div class="flex items-center justify-between">
+                                    <span class="w-12"><i class="fa-solid fa-brain mr-1"></i> INT</span>
+                                    <div class="w-full bg-slate-800 h-2 rounded mx-2 overflow-hidden"><div id="bar-int" class="bg-blue-500 h-full transition-all duration-1000 w-0"></div></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="w-12"><i class="fa-solid fa-face-smile mr-1"></i> CAR</span>
+                                    <div class="w-full bg-slate-800 h-2 rounded mx-2 overflow-hidden"><div id="bar-car" class="bg-pink-500 h-full transition-all duration-1000 w-0"></div></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="w-12"><i class="fa-solid fa-bolt mr-1"></i> AGI</span>
+                                    <div class="w-full bg-slate-800 h-2 rounded mx-2 overflow-hidden"><div id="bar-agi" class="bg-yellow-500 h-full transition-all duration-1000 w-0"></div></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="w-12"><i class="fa-solid fa-microchip mr-1"></i> TEC</span>
+                                    <div class="w-full bg-slate-800 h-2 rounded mx-2 overflow-hidden"><div id="bar-tec" class="bg-emerald-500 h-full transition-all duration-1000 w-0"></div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-300 font-bold mb-2">Log de Actividad (¿Qué hiciste?)</label>
+                            <textarea id="activityLog" required rows="4" placeholder="Describe tu aporte a la comunidad hoy..." class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition resize-none"></textarea>
+                        </div>
+
+                        <button type="submit" id="submitBtn" class="submit-btn w-full text-white font-bold py-4 rounded-lg text-lg uppercase tracking-wider flex justify-center items-center">
+                            <i class="fa-solid fa-cloud-arrow-up mr-2"></i> Guardar Partida
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Grilla de Roles -->
+            <div class="lg:col-span-2">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl text-blue-400"><i class="fa-solid fa-users mr-2"></i> Selecciona tu Personaje</h2>
+                    <span class="bg-blue-900 text-blue-300 text-xs px-3 py-1 rounded-full font-bold">27 Roles Disponibles</span>
+                </div>
+                
+                <div id="rolesContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Las tarjetas se generan por JavaScript -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Sistema de notificaciones elegante -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // ¡IMPORTANTE! Reemplaza este enlace con la URL real de tu Google Apps Script
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbylC8linrQKLsUsOZo7X5R-4hBo74bkqmDfMXYr15hWwr1rP5seH5IaTIZj2xEnfB-m/exec';
+
+        const rolesData = [
+            { id: 1, name: "Líder de discusión", gamified: "Foro Master", desc: "Modera los debates digitales, asegura que todas las voces sean escuchadas y lanza los temas más polémicos.", icon: "fa-comments" },
+            { id: 2, name: "Conector de ideas", gamified: "Trend Conector", desc: "Linkea lo que aprendemos con memes, series y tendencias. Comparte lo que viste en TikTok que se relaciona a la clase.", icon: "fa-link" },
+            { id: 3, name: "Cuestionador crítico", gamified: "Detective de Datos", desc: "No creas todo lo que ves. Sé el Sherlock Holmes y haz preguntas incómodas: '¿De dónde salió?', '¿Quién lo dice?'.", icon: "fa-user-secret" },
+            { id: 4, name: "Resumidor", gamified: "TL;DR Chief", desc: "Captura la esencia de la clase en un hilo, un reel o una infografía. Que nadie se quede sin lo más importante.", icon: "fa-compress-alt" },
+            { id: 5, name: "Explorador digital", gamified: "Cazador de Links", desc: "Surfea la web en busca de recursos, videos o artículos geniales. ¡Trae el mejor contenido a la mesa!", icon: "fa-compass" },
+            { id: 6, name: "Relator gráfico", gamified: "Mapa Mental Gamer", desc: "Transforma la clase en un mapa de videojuego o un diagrama. Haz que la información se vea como un feed curado.", icon: "fa-sitemap" },
+            { id: 7, name: "Investigador rápido", gamified: "Google Sprints", desc: "Cuando surja una duda, tú eres el más rápido del Oeste digital encontrando la respuesta verificada.", icon: "fa-bolt" },
+            { id: 8, name: "Coordinador del tiempo", gamified: "DJ del Tiempo", desc: "Controla el 'beat' de la clase. Maneja los tiempos con playlists o alarmas para fluir sin perder el ritmo.", icon: "fa-stopwatch" },
+            { id: 9, name: "Administrador de materiales", gamified: "Tech Kit Manager", desc: "Encargado de que tengamos todo lo digital y físico necesario: cables, apps, permisos. El support técnico.", icon: "fa-toolbox" },
+            { id: 10, name: "Facilitador de equipo", gamified: "Team Builder", desc: "Rompe el hielo digital y asegúrate de que todos estén conectados y colaborando. ¡El pegamento del grupo!", icon: "fa-users" },
+            { id: 11, name: "Encargado de orden", gamified: "Curator del Espacio", desc: "Vigila que nuestro 'server' (el aula) esté limpio, ordenado y con buena vibra. Espacio cool, ideas cool.", icon: "fa-broom" },
+            { id: 12, name: "Encargado de tecnología", gamified: "Control de Misión", desc: "Antes de empezar: verificar proyector, sonido y conexión. Responsable de que el despegue sea suave.", icon: "fa-satellite-dish" },
+            { id: 13, name: "Moderador de turnos", gamified: "Mod de la Sala", desc: "Gestiona la lista de speakers. Mantén la conversación ordenada y dinámica, como un chat en vivo.", icon: "fa-microphone" },
+            { id: 14, name: "Guardia de transición", gamified: "Switcher", desc: "Facilita los cambios de actividad. 'Cerramos pestaña, abrimos la siguiente'. Ayuda a hacer un refresh mental.", icon: "fa-exchange-alt" },
+            { id: 15, name: "Coordinador de bienvenida", gamified: "Host de la Sesión", desc: "Recibe a todos con un saludo o un meme. Activa la energía del grupo desde el minuto cero.", icon: "fa-door-open" },
+            { id: 16, name: "Puente profesor-alumnos", gamified: "Emisor de Señal", desc: "Canal de comunicación entre la 'comunidad' y el 'admin'. Recopilas dudas y las transmites claramente.", icon: "fa-broadcast-tower" },
+            { id: 17, name: "Observador de participación", gamified: "Analista de Engagement", desc: "Lleva un registro de quién participa e invita al stage a quienes están en modo espectador (lurking).", icon: "fa-chart-line" },
+            { id: 18, name: "Encargado de humor", gamified: "Alivio Comediante", desc: "Baja la tensión con un meme, GIF o chiste light. Mantén el mood positivo y la comunidad feliz.", icon: "fa-laugh-squint" },
+            { id: 19, name: "Reportero del día", gamified: "Storyteller del Día", desc: "Al final de la clase, publica el 'resumen de historias'. ¿Qué pasó? ¿Qué aprendimos? ¿Qué fue memorable?", icon: "fa-book-open" },
+            { id: 20, name: "Fotógrafo/documentalista", gamified: "Content Creator", desc: "Captura los momentos clave para el 'feed'. Crea la memoria visual de nuestro aprendizaje.", icon: "fa-camera" },
+            { id: 21, name: "Encargado de asistencia", gamified: "Check-in Manager", desc: "Pasa lista de manera creativa. Eres el guardián del registro de la comunidad.", icon: "fa-clipboard-check" },
+            { id: 22, name: "Apoyo académico", gamified: "Tutor de la Tribu", desc: "Ofrece ayuda a quienes se sientan 'cargando' con un tema. Sé el par que ayuda a otro a levelupear.", icon: "fa-hands-helping" },
+            { id: 23, name: "Consejero del grupo", gamified: "Community Manager", desc: "Eres el oído de la comunidad. Recibes feedbacks e inquietudes para construir un mejor espacio.", icon: "fa-headset" },
+            { id: 24, name: "Guardia de silencio", gamified: "Control de Ruido", desc: "Intervienes cuando el audio se satura. Una señal discreta para bajar el volumen y mantener el foco.", icon: "fa-volume-mute" },
+            { id: 25, name: "Inspector de ortografía", gamified: "Grammar Police Digital", desc: "Revisa que los textos públicos estén libres de errores. ¡Cuida la marca de la comunidad!", icon: "fa-spell-check" },
+            { id: 26, name: "Cierre reflexivo", gamified: "Final Epiphany", desc: "No es un resumen, es la reflexión final. Cierra con una idea poderosa o la mejor frase dicha.", icon: "fa-lightbulb" },
+            { id: 27, name: "Gamemaster de motivación", gamified: "Gamemaster", desc: "Diseña retos y dinámicas lúdicas para mantener la energía y motivación del grupo.", icon: "fa-dice-d20" }
+        ];
+
+        // --- SISTEMA DE NOTIFICACIONES ---
+        function showMessage(message, isError = false) {
+            const toast = document.getElementById("toast");
+            toast.innerHTML = isError ? `<i class="fa-solid fa-triangle-exclamation mr-2"></i>${message}` : `<i class="fa-solid fa-check-circle mr-2"></i>${message}`;
+            toast.style.backgroundColor = isError ? '#ef4444' : '#10b981'; // Rojo para error, verde para éxito
+            toast.className = "toast show";
+            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        // --- SISTEMA DE PROGRESO DEL JUGADOR ---
+        let playerTotalXP = 0;
+        const XP_PER_LEVEL = 200;
+        const TITLES = ["Novato", "Aprendiz", "Aventurero", "Héroe", "Leyenda", "Mítico", "Dios del Aula"];
+
+        // Actualizar nombre en tiempo real
+        document.getElementById('playerName').addEventListener('input', (e) => {
+            const name = e.target.value.trim();
+            document.getElementById('profileName').textContent = name ? name : 'Jugador';
+        });
+
+        // Función para añadir XP y actualizar UI
+        function gainXP(amount) {
+            playerTotalXP += amount;
+            
+            let playerLevel = Math.floor(playerTotalXP / XP_PER_LEVEL) + 1;
+            let xpForNextLevel = playerLevel * XP_PER_LEVEL;
+            let xpInCurrentLevel = playerTotalXP % XP_PER_LEVEL;
+            let progressPercent = (xpInCurrentLevel / XP_PER_LEVEL) * 100;
+
+            // Animar números y barra
+            document.getElementById('profileXP').textContent = playerTotalXP;
+            document.getElementById('profileLevel').textContent = playerLevel;
+            document.getElementById('profileNextXP').textContent = xpForNextLevel;
+            document.getElementById('profileProgress').style.width = progressPercent + '%';
+
+            // Actualizar Título
+            const titleIndex = Math.min(playerLevel - 1, TITLES.length - 1);
+            document.getElementById('profileTitle').textContent = TITLES[titleIndex];
+
+            // Efecto visual de ganar XP
+            const xpContainer = document.getElementById('xpTextContainer');
+            xpContainer.classList.remove('animate-xp');
+            void xpContainer.offsetWidth; // Trigger reflow
+            xpContainer.classList.add('animate-xp');
+        }
+        // ----------------------------------------
+
+        // Generar Estadísticas y Misiones Dinámicas Automáticamente
+        rolesData.forEach(role => {
+            const seed = role.id;
+            role.stats = {
+                int: Math.max(30, (seed * 17) % 100),
+                car: Math.max(30, (seed * 23) % 100),
+                agi: Math.max(30, (seed * 31) % 100),
+                tec: Math.max(30, (seed * 13) % 100)
+            };
+            role.xp = 50 + ((seed * 7) % 50); 
+
+            if ([1, 10, 13, 15, 23].includes(role.id)) {
+                role.hint = `Misión de ${role.gamified}: ¿Cómo ayudaste a que otros participaran o se sintieran bienvenidos hoy?`;
+                role.stats.car += 30;
+            } else if ([5, 7, 9, 12, 20].includes(role.id)) {
+                role.hint = `Misión de ${role.gamified}: ¿Qué recurso técnico, link o contenido multimedia aportaste hoy?`;
+                role.stats.tec += 30;
+            } else if ([2, 3, 4, 19, 25, 26].includes(role.id)) {
+                role.hint = `Misión de ${role.gamified}: ¿Cuál fue el dato clave, resumen o reflexión profunda que aportaste?`;
+                role.stats.int += 30;
+            } else if ([6, 8, 11, 14, 16, 17, 18, 21, 22, 24, 27].includes(role.id)) {
+                role.hint = `Misión de ${role.gamified}: ¿Cómo ayudaste a mantener el orden, la energía o el tiempo en la sesión?`;
+                role.stats.agi += 30;
+            } else {
+                role.hint = `Misión de ${role.gamified}: Describe cuál fue tu mejor jugada o aporte en la clase de hoy.`;
+            }
+            
+            Object.keys(role.stats).forEach(k => role.stats[k] = Math.min(100, role.stats[k]));
+        });
+
+        const container = document.getElementById('rolesContainer');
+        const roleSelect = document.getElementById('roleSelect');
+        const characterStatsPanel = document.getElementById('characterStats');
+        const activityLog = document.getElementById('activityLog');
+        let currentSelectedCard = null;
+        const cardsMap = {}; 
+        const rolesMap = {}; 
+
+        function updateCharacterSheet(role) {
+            characterStatsPanel.classList.remove('hidden');
+            document.getElementById('xpReward').textContent = role.xp;
+            activityLog.placeholder = role.hint;
+
+            document.getElementById('bar-int').style.width = '0%';
+            document.getElementById('bar-car').style.width = '0%';
+            document.getElementById('bar-agi').style.width = '0%';
+            document.getElementById('bar-tec').style.width = '0%';
+
+            setTimeout(() => {
+                document.getElementById('bar-int').style.width = role.stats.int + '%';
+                document.getElementById('bar-car').style.width = role.stats.car + '%';
+                document.getElementById('bar-agi').style.width = role.stats.agi + '%';
+                document.getElementById('bar-tec').style.width = role.stats.tec + '%';
+            }, 50);
+        }
+
+        rolesData.forEach(role => {
+            const card = document.createElement('div');
+            card.className = 'role-card rounded-xl p-5 flex flex-col justify-between';
+            card.innerHTML = `
+                <div>
+                    <div class="flex items-center justify-between mb-3 border-b border-slate-700 pb-2">
+                        <span class="text-xs text-gray-400 font-bold uppercase tracking-wider">${role.name}</span>
+                        <span class="text-slate-500 text-sm font-bold">#${role.id}</span>
+                    </div>
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="icon-container text-blue-400 text-2xl transition-colors duration-300">
+                            <i class="fa-solid ${role.icon}"></i>
+                        </div>
+                        <h3 class="gamified-title text-[10px] md:text-xs text-white leading-tight">${role.gamified}</h3>
+                    </div>
+                    <p class="text-sm text-gray-400 leading-relaxed">${role.desc}</p>
+                </div>
+            `;
+            
+            const roleString = `${role.id}. ${role.gamified} (${role.name})`;
+            
+            const option = document.createElement('option');
+            option.value = roleString;
+            option.textContent = roleString;
+            roleSelect.appendChild(option);
+
+            cardsMap[roleString] = card;
+            rolesMap[roleString] = role;
+
+            card.addEventListener('click', () => {
+                if(currentSelectedCard) {
+                    currentSelectedCard.classList.remove('selected');
+                }
+                card.classList.add('selected');
+                currentSelectedCard = card;
+                roleSelect.value = roleString;
+                updateCharacterSheet(role);
+            });
+
+            container.appendChild(card);
+        });
+
+        roleSelect.addEventListener('change', (e) => {
+            if(currentSelectedCard) {
+                currentSelectedCard.classList.remove('selected');
+            }
+            const selectedValue = e.target.value;
+            const cardToSelect = cardsMap[selectedValue];
+            const selectedRoleData = rolesMap[selectedValue];
+            
+            if(cardToSelect) {
+                cardToSelect.classList.add('selected');
+                currentSelectedCard = cardToSelect;
+                updateCharacterSheet(selectedRoleData);
+                
+                if(window.innerWidth < 1024) {
+                    cardToSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
+
+        document.getElementById('questForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            if(!roleSelect.value) {
+                showMessage('¡Debes seleccionar un personaje (Rol) antes de guardar!', true);
+                return;
+            }
+
+            const playerGroup = document.getElementById('playerGroup').value;
+            if(!playerGroup) {
+                showMessage('¡Debes seleccionar tu grupo!', true);
+                return;
+            }
+
+            if(GOOGLE_SCRIPT_URL === 'REEMPLAZA_ESTO_CON_TU_URL_DE_APPS_SCRIPT') {
+                showMessage('Falta configurar la URL de Google Apps Script en el código.', true);
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Guardando...';
+            btn.disabled = true;
+
+            const selectedValue = roleSelect.value;
+            const selectedRoleData = rolesMap[selectedValue];
+
+            const data = new URLSearchParams({
+                nombre: document.getElementById('playerName').value,
+                grupo: playerGroup,
+                rol: selectedValue,
+                actividad: document.getElementById('activityLog').value,
+                xp: selectedRoleData.xp
+            });
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: data
+            })
+            .then(response => {
+                // Dar la recompensa de XP al jugador
+                if(selectedRoleData) {
+                    gainXP(selectedRoleData.xp);
+                }
+
+                showMessage(`¡Misión Cumplida! +${selectedRoleData.xp} XP`);
+                
+                // Limpiar form de actividad, pero mantener el nombre para facilitar múltiples envíos
+                document.getElementById('activityLog').value = '';
+                activityLog.placeholder = 'Describe tu aporte a la comunidad hoy...';
+                roleSelect.value = '';
+                characterStatsPanel.classList.add('hidden'); 
+
+                if(currentSelectedCard) currentSelectedCard.classList.remove('selected');
+                currentSelectedCard = null;
+
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> Guardar Partida';
+                btn.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error!', error.message);
+                showMessage('Error al conectar con la base de datos.', true);
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> Guardar Partida';
+                btn.disabled = false;
+            });
+        });
+    </script>
+</body>
+</html>
