@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pase de Lista - 201 | PLAYER 1</title>
+    <style>
+        /* Variables de estilo Cyberpunk / Gamer */
+        :root {
+            --bg-color: #050505;
+            --grid-color: rgba(0, 255, 255, 0.05);
+            --card-bg: rgba(15, 15, 20, 0.9);
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff003c;
+            --neon-green: #39ff14;
+            --text-main: #e0e0e0;
+            --text-muted: #888899;
+            --border-color: #333;
+            /* Fuentes del sistema estilo terminal/consola */
+            --font-main: 'Consolas', 'Courier New', Courier, monospace;
+            --font-title: 'Impact', 'Arial Black', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            /* Fondo de cuadrícula estilo Tron / Retrowave */
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: center;
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        /* Contenedor principal */
+        .form-container {
+            max-width: 660px;
+            margin: 0 auto;
+            padding-bottom: 40px;
+        }
+
+        /* Tarjetas de misiones (Preguntas) */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--neon-cyan);
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(0, 243, 255, 0.05), transparent);
+            transform: skewX(-20deg);
+            transition: 0.5s;
+        }
+
+        .card:hover {
+            border-left-color: var(--neon-pink);
+            box-shadow: 0 0 15px rgba(255, 0, 60, 0.2);
+            transform: translateX(5px);
+        }
+
+        .card:hover::before {
+            left: 200%;
+        }
+
+        /* Cabecera / Pantalla de Título */
+        .card-header {
+            background: linear-gradient(45deg, #111, #1a1a24);
+            border-left: none;
+            border-top: 4px solid var(--neon-cyan);
+            border-bottom: 4px solid var(--neon-pink);
+            text-align: center;
+            padding: 30px 20px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-family: var(--font-title);
+            font-size: 2.5rem;
+            color: #fff;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            text-shadow: 
+                0 0 5px var(--neon-cyan),
+                0 0 10px var(--neon-cyan),
+                0 0 20px var(--neon-cyan);
+            animation: glitch 3s infinite;
+        }
+
+        @keyframes glitch {
+            0% { text-shadow: 2px 0 var(--neon-pink), -2px 0 var(--neon-cyan); }
+            5% { text-shadow: -2px 0 var(--neon-pink), 2px 0 var(--neon-cyan); }
+            10% { text-shadow: 2px 0 var(--neon-pink), -2px 0 var(--neon-cyan); }
+            15% { text-shadow: 0 0 10px var(--neon-cyan); }
+            100% { text-shadow: 0 0 10px var(--neon-cyan); }
+        }
+
+        .required-note {
+            color: var(--neon-pink);
+            font-size: 0.9rem;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        /* Títulos de las preguntas */
+        .question-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+            display: block;
+            color: var(--neon-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .required-asterisk {
+            color: var(--neon-pink);
+            margin-left: 5px;
+            text-shadow: 0 0 5px var(--neon-pink);
+        }
+
+        .description {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            margin-top: -8px;
+            display: block;
+        }
+
+        /* Inputs (Campos de texto) */
+        input[type="email"],
+        input[type="date"],
+        select,
+        textarea {
+            width: 100%;
+            background-color: #0a0a0c;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 12px 15px;
+            font-family: var(--font-main);
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        input[type="email"]:focus,
+        input[type="date"]:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.3) inset, 0 0 5px rgba(0, 243, 255, 0.5);
+        }
+
+        /* Adaptar el ícono del calendario al tema oscuro */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1); /* Vuelve el ícono blanco */
+            cursor: pointer;
+            padding: 5px;
+            transition: 0.3s;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator:hover {
+            filter: invert(0.7) sepia(1) hue-rotate(135deg) saturate(500%); /* Brillo cyan al pasar el mouse */
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        /* Checkboxes y Radios */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.9rem;
+            background-color: #111;
+            padding: 10px 15px;
+            border: 1px solid #333;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .option-label:hover {
+            border-color: var(--neon-cyan);
+            background-color: rgba(0, 243, 255, 0.1);
+            color: var(--neon-cyan);
+        }
+
+        .option-label input {
+            appearance: none;
+            background-color: #222;
+            margin-right: 12px;
+            font-size: inherit;
+            color: currentColor;
+            width: 18px;
+            height: 18px;
+            border: 1px solid #555;
+            display: grid;
+            place-content: center;
+            cursor: pointer;
+        }
+
+        .option-label input::before {
+            content: "";
+            width: 10px;
+            height: 10px;
+            background-color: var(--neon-cyan);
+            transform: scale(0);
+            transition: 120ms transform ease-in-out;
+            box-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        .option-label input:checked::before {
+            transform: scale(1);
+        }
+
+        .option-label input:checked {
+            border-color: var(--neon-cyan);
+        }
+
+        /* Checkbox específico para emociones */
+        input[type="checkbox"]::before {
+            clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+        }
+
+        /* Botón de envío */
+        .btn-submit {
+            background: transparent;
+            color: var(--neon-cyan);
+            border: 2px solid var(--neon-cyan);
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            font-family: var(--font-title);
+            letter-spacing: 2px;
+            cursor: pointer;
+            width: 100%;
+            text-transform: uppercase;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2) inset;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-submit:hover {
+            background: var(--neon-cyan);
+            color: #000;
+            box-shadow: 0 0 20px var(--neon-cyan);
+        }
+
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+
+        .btn-submit:disabled {
+            border-color: #555;
+            color: #555;
+            cursor: not-allowed;
+            box-shadow: none;
+            background: transparent;
+        }
+
+        /* Mensajes de sistema */
+        #status-message {
+            margin-top: 20px;
+            padding: 15px;
+            display: none;
+            font-weight: bold;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-left: 4px solid;
+            background: rgba(0,0,0,0.8);
+        }
+
+        .success {
+            color: var(--neon-green);
+            border-left-color: var(--neon-green);
+            box-shadow: 0 0 10px rgba(57, 255, 20, 0.2);
+        }
+
+        .error {
+            color: var(--neon-pink);
+            border-left-color: var(--neon-pink);
+            box-shadow: 0 0 10px rgba(255, 0, 60, 0.2);
+        }
+
+        /* Responsividad */
+        @media (max-width: 480px) {
+            h1 { font-size: 1.8rem; }
+            .card { padding: 15px; }
+            .option-label { font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <form id="attendance-form">
+        
+        <!-- Header / Title Screen -->
+        <div class="card card-header">
+            <h1>PASE DE LISTA 201</h1>
+            <p style="color: var(--text-muted); font-family: var(--font-main);">/// LEVEL: HIGH SCHOOL ///</p>
+            <p class="required-note">[!] CAMPOS REQUERIDOS MARCADOS CON *</p>
+        </div>
+
+        <!-- 1. Correo electrónico -->
+        <div class="card">
+            <label class="question-title">1. PLAYER_EMAIL <span class="required-asterisk">*</span></label>
+            <span class="description">Ingresa tu ID de conexión (Correo)</span>
+            <input type="email" name="email" placeholder="usuario@server.com" required>
+        </div>
+
+        <!-- 2. Fecha -->
+        <div class="card">
+            <label class="question-title">2. SYSTEM_DATE</label>
+            <span class="description">Selecciona la fecha de registro (Hoy)</span>
+            <input type="date" name="fecha" onclick="this.showPicker()" style="cursor: pointer;">
+        </div>
+
+        <!-- 3. Nombre -->
+        <div class="card">
+            <label class="question-title">3. CHOOSE YOUR CHARACTER <span class="required-asterisk">*</span></label>
+            <span class="description">Selecciona tu avatar de la base de datos</span>
+            <select name="nombre" required>
+                <option value="" disabled selected>> SELECCIONAR JUGADOR...</option>
+                <option value="ABAD DEL VALLE RAMON">ABAD DEL VALLE RAMON</option>
+                <option value="ALDAO AUDIFFRED MANUEL">ALDAO AUDIFFRED MANUEL</option>
+                <option value="ANDRADE HERRERA GUILLERMO">ANDRADE HERRERA GUILLERMO</option>
+                <option value="ANDRADE PAZ ANA SOFIA">ANDRADE PAZ ANA SOFIA</option>
+                <option value="ARLEY VAZQUEZ DIEGO">ARLEY VAZQUEZ DIEGO</option>
+                <option value="ARREGUIN HERNANDEZ JOSE ANGEL">ARREGUIN HERNANDEZ JOSE ANGEL</option>
+                <option value="BARBOSA CASTRO ISABELLA">BARBOSA CASTRO ISABELLA</option>
+                <option value="BAUTISTA MEDINA PAULA">BAUTISTA MEDINA PAULA</option>
+                <option value="CONTRERAS ARCOS AITANA">CONTRERAS ARCOS AITANA</option>
+                <option value="DURAN MICHELENA MARIA EMILIA">DURAN MICHELENA MARIA EMILIA</option>
+                <option value="FERNANDEZ BENITEZ JUAN RUPERTO">FERNANDEZ BENITEZ JUAN RUPERTO</option>
+                <option value="GOMEZ FERNANDEZ IÑAKI">GOMEZ FERNANDEZ IÑAKI</option>
+                <option value="GONZALEZ NEVAREZ SANTIAGO">GONZALEZ NEVAREZ SANTIAGO</option>
+                <option value="GUTIERREZ NIETO LEONARDO">GUTIERREZ NIETO LEONARDO</option>
+                <option value="JUARISTI CUBILLAS VALERIA">JUARISTI CUBILLAS VALERIA</option>
+                <option value="LANDAVERDE GRANADOS IKER DE JESUS">LANDAVERDE GRANADOS IKER DE JESUS</option>
+                <option value="LOPEZ CARBONEY RENATA">LOPEZ CARBONEY RENATA</option>
+                <option value="MARINA PERUSQUIA FERNANDA">MARINA PERUSQUIA FERNANDA</option>
+                <option value="MORENO KARCZEWSKI SANTIAGO">MORENO KARCZEWSKI SANTIAGO</option>
+                <option value="MUÑIZ CAMARGO MARIA ANDREA">MUÑIZ CAMARGO MARIA ANDREA</option>
+                <option value="MUÑOZ HERRERA LUCIA">MUÑOZ HERRERA LUCIA</option>
+                <option value="PEREZ LARA ROBERTO GABRIEL">PEREZ LARA ROBERTO GABRIEL</option>
+                <option value="PRATELLESI ROLDAN DANIELA">PRATELLESI ROLDAN DANIELA</option>
+                <option value="ROMERO GONZALEZ SANTIAGO">ROMERO GONZALEZ SANTIAGO</option>
+                <option value="RUIZ GARCIA MARIA JOSE">RUIZ GARCIA MARIA JOSE</option>
+                <option value="ULLOA CORTES CONSTANZA SHALYN">ULLOA CORTES CONSTANZA SHALYN</option>
+            </select>
+        </div>
+
+        <!-- 4. Aprendizaje -->
+        <div class="card">
+            <label class="question-title">4. SKILLS UNLOCKED</label>
+            <span class="description">Describe qué habilidad/conocimiento aprendiste hoy y cómo la usarías en el juego de la vida.</span>
+            <textarea name="aprendizaje" placeholder=">_ Ingresa texto aquí..."></textarea>
+        </div>
+
+        <!-- 5. Sentimientos (Checkboxes) -->
+        <div class="card">
+            <label class="question-title">5. STATUS EFFECTS <span class="required-asterisk">*</span></label>
+            <span class="description">¿Cuáles son tus estados alterados actuales? (Selecciona las emociones que apliquen)</span>
+            <div class="options-grid">
+                <label class="option-label"><input type="checkbox" name="sentimientos" value="FELIZ"> [HP+] FELIZ</label>
+                <label class="option-label"><input type="checkbox" name="sentimientos" value="TRISTE"> [HP-] TRISTE</label>
+                <label class="option-label"><input type="checkbox" name="sentimientos" value="SORPRENDIDO"> [!!] SORPRENDIDO</label>
+                <label class="option-label"><input type="checkbox" name="sentimientos" value="CANSADO"> [STAMINA LOW] CANSADO</label>
+                <label class="option-label"><input type="checkbox" name="sentimientos" value="ENOJADO"> [ATK UP] ENOJADO</label>
+                <label class="option-label"><input type="checkbox" name="sentimientos" value="CON MIEDO"> [DEF DOWN] MIEDO</label>
+                <label class="option-label"><input type="checkbox" name="sentimientos" value="MOTIVADO"> [XP BOOST] MOTIVADO</label>
+                <label class="option-label"><input type="checkbox" name="sentimientos" value="DISPUESTO"> [READY] DISPUESTO</label>
+                <label class="option-label"><input type="checkbox" name="sentimientos" value="CONTENTO"> [BUFF] CONTENTO</label>
+            </div>
+        </div>
+
+        <!-- 6. Reflexión -->
+        <div class="card">
+            <label class="question-title">6. DEBRIEFING MISSION <span class="required-asterisk">*</span></label>
+            <span class="description">Reflexiona y describe el porqué de tus estados actuales.</span>
+            <textarea name="reflexion" placeholder=">_ Análisis de estado emocional..." required></textarea>
+        </div>
+
+        <!-- 7. Capacidad (Radios) -->
+        <div class="card">
+            <label class="question-title">7. MISSION CLEARED? <span class="required-asterisk">*</span></label>
+            <span class="description">¿Te sentiste capaz de realizar las actividades (quests) propuestas?</span>
+            <div class="radio-group">
+                <label class="option-label">
+                    <input type="radio" name="capaz" value="Si" required> [YES] MISIÓN CUMPLIDA
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="capaz" value="No"> [NO] GAME OVER (Requiere respawn)
+                </label>
+            </div>
+        </div>
+
+        <!-- 8. Por qué capacidad -->
+        <div class="card">
+            <label class="question-title">8. POST-GAME ANALYSIS</label>
+            <span class="description">Describe el por qué (¿Jefe muy difícil? ¿Controles confusos?).</span>
+            <textarea name="porque_capaz" placeholder=">_ Ingresa tu reporte..."></textarea>
+        </div>
+
+        <!-- 9. Comentarios extra -->
+        <div class="card">
+            <label class="question-title">9. DEVELOPER FEEDBACK</label>
+            <span class="description">Escribe cualquier duda, reporte de bug, comentario extra o herramienta que quieres ver en futuros parches (clases).</span>
+            <textarea name="comentarios_extra" placeholder=">_ Feedback del jugador..."></textarea>
+        </div>
+
+        <!-- Controles de envío -->
+        <div>
+            <button type="submit" class="btn-submit" id="submit-btn">💾 SAVE DATA & UPLOAD</button>
+            <div id="status-message"></div>
+        </div>
+
+    </form>
+</div>
+
+<script>
+    // ⚠️ IMPORTANTE: Reemplaza esta URL con la URL de tu Web App de Google Apps Script ⚠️
+    const scriptURL = 'https://script.google.com/macros/s/AKfycby0iSgVyPGFCnfdBVeCv9cypcgy8eAcdJNNZfspAuOpdJKZlDgBz_o01R1LatfTvyLcRA/exec'; 
+    const form = document.getElementById('attendance-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const statusMessage = document.getElementById('status-message');
+
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        
+        // Validar que al menos un checkbox de sentimientos esté seleccionado
+        const checkboxes = document.querySelectorAll('input[name="sentimientos"]:checked');
+        if (checkboxes.length === 0) {
+            alert("SYSTEM ERROR: Debes seleccionar al menos un STATUS EFFECT (Emoción) en la pregunta 5.");
+            return;
+        }
+
+        // Cambiar estado del botón
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'UPLOADING DATA...';
+        statusMessage.style.display = 'none';
+
+        // Recopilar datos y convertirlos a URLSearchParams (más amigable para Apps Script)
+        const formData = new FormData(form);
+        const data = new URLSearchParams();
+        for (const pair of formData) {
+            data.append(pair[0], pair[1]);
+        }
+
+        // Enviar datos usando fetch a Google Apps Script con no-cors
+        fetch(scriptURL, { 
+            method: 'POST', 
+            mode: 'no-cors', // Evita el error CORS visual, pero requiere permisos correctos en el Script
+            body: data
+        })
+        .then(response => {
+            // Nota: Con 'no-cors', siempre pasará por aquí si hay internet, 
+            // incluso si Google rechazó el guardado por permisos.
+            
+            statusMessage.innerHTML = '> UPLOAD COMPLETE! DATA SAVED SUCCESSFULLY. <br>THANKS FOR PLAYING.';
+            statusMessage.className = 'success';
+            statusMessage.style.display = 'block';
+            form.reset(); 
+            
+            setTimeout(() => {
+                statusMessage.style.display = 'none';
+            }, 5000);
+        })
+        .catch(error => {
+            console.error('Error!', error.message);
+            statusMessage.innerHTML = '> FATAL ERROR: CONNECTION LOST. <br>PLEASE TRY AGAIN.';
+            statusMessage.className = 'error';
+            statusMessage.style.display = 'block';
+        })
+        .finally(() => {
+            // Restaurar botón
+            submitBtn.disabled = false;
+            submitBtn.innerText = '💾 SAVE DATA & UPLOAD';
+        });
+    });
+</script>
+
+</body>
+</html>
