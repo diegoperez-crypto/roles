@@ -65,7 +65,7 @@
         .toast {
             visibility: hidden;
             min-width: 250px;
-            background-color: #10b981;
+            background-color: #10b981; /* Verde por defecto */
             color: #fff;
             text-align: center;
             border-radius: 8px;
@@ -75,14 +75,21 @@
             left: 50%;
             bottom: 30px;
             transform: translateX(-50%);
-            font-size: 17px;
             font-family: 'Press Start 2P', cursive;
             font-size: 0.7rem;
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.8);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
         }
         .toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+
+        /* Animación para ganar XP */
+        @keyframes popXP {
+            0% { transform: scale(1); color: #60a5fa; }
+            50% { transform: scale(1.5); color: #facc15; }
+            100% { transform: scale(1); color: #60a5fa; }
+        }
+        .animate-xp { animation: popXP 0.8s ease-in-out; }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -96,14 +103,39 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            <!-- Panel de Misión (Formulario) -->
-            <div class="lg:col-span-1 order-last lg:order-first">
-                <div class="bg-slate-800 border-2 border-purple-500 rounded-xl p-6 sticky top-8 shadow-[0_0_15px_rgba(168,85,247,0.4)]">
+            <!-- Columna Izquierda: Perfil y Formulario -->
+            <div class="lg:col-span-1 order-last lg:order-first space-y-6">
+                
+                <!-- Panel de Perfil del Jugador -->
+                <div class="bg-slate-800 border-2 border-blue-500 rounded-xl p-6 shadow-[0_0_15px_rgba(59,130,246,0.4)]">
+                    <h2 class="text-xl text-blue-400 mb-4 text-center"><i class="fa-solid fa-id-badge mr-2"></i> Mi Perfil</h2>
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-16 h-16 rounded-full bg-slate-700 border-2 border-yellow-400 flex items-center justify-center text-2xl shadow-inner">
+                            <i class="fa-solid fa-user-astronaut text-gray-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white uppercase tracking-wide" id="profileName">Jugador</h3>
+                            <p class="text-sm text-yellow-400 font-bold">Nivel <span id="profileLevel">1</span> <span id="profileTitle" class="text-gray-400 text-xs font-normal ml-1">Novato</span></p>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-bold">
+                            <span class="text-gray-400 uppercase">XP Total</span>
+                            <span class="text-blue-400" id="xpTextContainer"><span id="profileXP">0</span> / <span id="profileNextXP">200</span> XP</span>
+                        </div>
+                        <div class="w-full bg-slate-900 h-3 rounded-full overflow-hidden border border-slate-700">
+                            <div id="profileProgress" class="bg-gradient-to-r from-blue-500 to-purple-500 h-full transition-all duration-700 ease-out" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel de Misión (Formulario) -->
+                <div class="bg-slate-800 border-2 border-purple-500 rounded-xl p-6 shadow-[0_0_15px_rgba(168,85,247,0.4)]">
                     <h2 class="text-xl text-purple-400 mb-6 text-center"><i class="fa-solid fa-gamepad mr-2"></i> Reportar Misión</h2>
                     
                     <form id="questForm" class="space-y-6">
                         <div>
-                            <label class="block text-gray-300 font-bold mb-2">EMPEZANDO CON APELLIDOS, Nombre COMPLETO del Jugador. </label>
+                            <label class="block text-gray-300 font-bold mb-2">Nombre del Jugador</label>
                             <input type="text" id="playerName" required placeholder="Tu nombre..." class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
                         </div>
 
@@ -112,13 +144,12 @@
                             <select id="roleSelect" required class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition appearance-none cursor-pointer pr-10">
                                 <option value="" disabled selected>Haz clic en una tarjeta o elige aquí...</option>
                             </select>
-                            <!-- Flecha personalizada para el menú desplegable -->
                             <div class="pointer-events-none absolute right-0 top-[38px] flex items-center px-4 text-blue-400">
                                 <i class="fa-solid fa-chevron-down text-sm"></i>
                             </div>
                         </div>
 
-                        <!-- SECCIÓN: Estadísticas del Personaje (Oculta por defecto) -->
+                        <!-- Estadísticas del Personaje -->
                         <div id="characterStats" class="hidden bg-slate-900/80 rounded-lg p-4 border border-slate-600 shadow-inner">
                             <div class="flex justify-between items-center mb-3 border-b border-slate-700 pb-2">
                                 <span class="text-yellow-400 font-bold text-sm"><i class="fa-solid fa-star mr-1"></i> Recompensa: <span id="xpReward" class="text-white">0</span> XP</span>
@@ -171,10 +202,11 @@
         </div>
     </div>
 
-    <div id="toast" class="toast"><i class="fa-solid fa-check-circle mr-2"></i>¡Partida Guardada con Éxito!</div>
+    <!-- Sistema de notificaciones elegante -->
+    <div id="toast" class="toast"></div>
 
     <script>
-        // PEGA AQUÍ LA URL DE TU APLICACIÓN WEB DE GOOGLE APPS SCRIPT
+        // ¡IMPORTANTE! Reemplaza este enlace con la URL real de tu Google Apps Script
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzDN0p53IyBIDLTdDXOuAiNccV4UqwMiDkcCfpCR8c3fFvvPWn7Sy-14FSNEigUf8d/exec';
 
         const rolesData = [
@@ -207,9 +239,55 @@
             { id: 27, name: "Gamemaster de motivación", gamified: "Gamemaster", desc: "Diseña retos y dinámicas lúdicas para mantener la energía y motivación del grupo.", icon: "fa-dice-d20" }
         ];
 
+        // --- SISTEMA DE NOTIFICACIONES ---
+        function showMessage(message, isError = false) {
+            const toast = document.getElementById("toast");
+            toast.innerHTML = isError ? `<i class="fa-solid fa-triangle-exclamation mr-2"></i>${message}` : `<i class="fa-solid fa-check-circle mr-2"></i>${message}`;
+            toast.style.backgroundColor = isError ? '#ef4444' : '#10b981'; // Rojo para error, verde para éxito
+            toast.className = "toast show";
+            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        // --- SISTEMA DE PROGRESO DEL JUGADOR ---
+        let playerTotalXP = 0;
+        const XP_PER_LEVEL = 200;
+        const TITLES = ["Novato", "Aprendiz", "Aventurero", "Héroe", "Leyenda", "Mítico", "Dios del Aula"];
+
+        // Actualizar nombre en tiempo real
+        document.getElementById('playerName').addEventListener('input', (e) => {
+            const name = e.target.value.trim();
+            document.getElementById('profileName').textContent = name ? name : 'Jugador';
+        });
+
+        // Función para añadir XP y actualizar UI
+        function gainXP(amount) {
+            playerTotalXP += amount;
+            
+            let playerLevel = Math.floor(playerTotalXP / XP_PER_LEVEL) + 1;
+            let xpForNextLevel = playerLevel * XP_PER_LEVEL;
+            let xpInCurrentLevel = playerTotalXP % XP_PER_LEVEL;
+            let progressPercent = (xpInCurrentLevel / XP_PER_LEVEL) * 100;
+
+            // Animar números y barra
+            document.getElementById('profileXP').textContent = playerTotalXP;
+            document.getElementById('profileLevel').textContent = playerLevel;
+            document.getElementById('profileNextXP').textContent = xpForNextLevel;
+            document.getElementById('profileProgress').style.width = progressPercent + '%';
+
+            // Actualizar Título
+            const titleIndex = Math.min(playerLevel - 1, TITLES.length - 1);
+            document.getElementById('profileTitle').textContent = TITLES[titleIndex];
+
+            // Efecto visual de ganar XP
+            const xpContainer = document.getElementById('xpTextContainer');
+            xpContainer.classList.remove('animate-xp');
+            void xpContainer.offsetWidth; // Trigger reflow
+            xpContainer.classList.add('animate-xp');
+        }
+        // ----------------------------------------
+
         // Generar Estadísticas y Misiones Dinámicas Automáticamente
         rolesData.forEach(role => {
-            // Stats únicos basados en su ID (pseudo-aleatorios pero consistentes)
             const seed = role.id;
             role.stats = {
                 int: Math.max(30, (seed * 17) % 100),
@@ -217,26 +295,24 @@
                 agi: Math.max(30, (seed * 31) % 100),
                 tec: Math.max(30, (seed * 13) % 100)
             };
-            role.xp = 50 + ((seed * 7) % 50); // Recompensa base entre 50 y 100 XP
+            role.xp = 50 + ((seed * 7) % 50); 
 
-            // Misiones sugeridas (Hints) según el tipo de rol
             if ([1, 10, 13, 15, 23].includes(role.id)) {
                 role.hint = `Misión de ${role.gamified}: ¿Cómo ayudaste a que otros participaran o se sintieran bienvenidos hoy?`;
-                role.stats.car += 30; // Boost carisma
+                role.stats.car += 30;
             } else if ([5, 7, 9, 12, 20].includes(role.id)) {
                 role.hint = `Misión de ${role.gamified}: ¿Qué recurso técnico, link o contenido multimedia aportaste hoy?`;
-                role.stats.tec += 30; // Boost tech
+                role.stats.tec += 30;
             } else if ([2, 3, 4, 19, 25, 26].includes(role.id)) {
                 role.hint = `Misión de ${role.gamified}: ¿Cuál fue el dato clave, resumen o reflexión profunda que aportaste?`;
-                role.stats.int += 30; // Boost inteligencia
+                role.stats.int += 30;
             } else if ([6, 8, 11, 14, 16, 17, 18, 21, 22, 24, 27].includes(role.id)) {
                 role.hint = `Misión de ${role.gamified}: ¿Cómo ayudaste a mantener el orden, la energía o el tiempo en la sesión?`;
-                role.stats.agi += 30; // Boost agilidad
+                role.stats.agi += 30;
             } else {
                 role.hint = `Misión de ${role.gamified}: Describe cuál fue tu mejor jugada o aporte en la clase de hoy.`;
             }
             
-            // Asegurar que ninguna barra pase de 100
             Object.keys(role.stats).forEach(k => role.stats[k] = Math.min(100, role.stats[k]));
         });
 
@@ -248,19 +324,16 @@
         const cardsMap = {}; 
         const rolesMap = {}; 
 
-        // Función para actualizar la Hoja de Personaje
         function updateCharacterSheet(role) {
             characterStatsPanel.classList.remove('hidden');
             document.getElementById('xpReward').textContent = role.xp;
             activityLog.placeholder = role.hint;
 
-            // Resetear barras primero para que la animación se vea
             document.getElementById('bar-int').style.width = '0%';
             document.getElementById('bar-car').style.width = '0%';
             document.getElementById('bar-agi').style.width = '0%';
             document.getElementById('bar-tec').style.width = '0%';
 
-            // Animar las barras de stats
             setTimeout(() => {
                 document.getElementById('bar-int').style.width = role.stats.int + '%';
                 document.getElementById('bar-car').style.width = role.stats.car + '%';
@@ -269,7 +342,6 @@
             }, 50);
         }
 
-        // Renderizar Tarjetas
         rolesData.forEach(role => {
             const card = document.createElement('div');
             card.className = 'role-card rounded-xl p-5 flex flex-col justify-between';
@@ -291,35 +363,27 @@
             
             const roleString = `${role.id}. ${role.gamified} (${role.name})`;
             
-            // 1. Agregar opción a la lista desplegable
             const option = document.createElement('option');
             option.value = roleString;
             option.textContent = roleString;
             roleSelect.appendChild(option);
 
-            // Guardar referencia de la tarjeta y los datos
             cardsMap[roleString] = card;
             rolesMap[roleString] = role;
 
-            // 2. Lógica de Selección al hacer clic en la tarjeta
             card.addEventListener('click', () => {
                 if(currentSelectedCard) {
                     currentSelectedCard.classList.remove('selected');
                 }
                 card.classList.add('selected');
                 currentSelectedCard = card;
-                
-                // Actualizar la lista desplegable
                 roleSelect.value = roleString;
-                
-                // Mostrar atributos y misión
                 updateCharacterSheet(role);
             });
 
             container.appendChild(card);
         });
 
-        // Sincronizar: Si el usuario usa la lista desplegable, iluminar la tarjeta
         roleSelect.addEventListener('change', (e) => {
             if(currentSelectedCard) {
                 currentSelectedCard.classList.remove('selected');
@@ -331,28 +395,24 @@
             if(cardToSelect) {
                 cardToSelect.classList.add('selected');
                 currentSelectedCard = cardToSelect;
-                
-                // Mostrar atributos y misión
                 updateCharacterSheet(selectedRoleData);
                 
-                // Hacer scroll suave hacia la tarjeta en móviles si cambian desde la lista
                 if(window.innerWidth < 1024) {
                     cardToSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             }
         });
 
-        // Enviar Formulario a Google Sheets
         document.getElementById('questForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
             if(!roleSelect.value) {
-                alert('¡Debes seleccionar un personaje (Rol) antes de guardar la partida!');
+                showMessage('¡Debes seleccionar un personaje (Rol) antes de guardar!', true);
                 return;
             }
 
             if(GOOGLE_SCRIPT_URL === 'REEMPLAZA_ESTO_CON_TU_URL_DE_APPS_SCRIPT') {
-                alert('Falta configurar la URL de Google Apps Script en el código fuente (línea 116).');
+                showMessage('Falta configurar la URL de Google Apps Script en el código.', true);
                 return;
             }
 
@@ -360,41 +420,44 @@
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Guardando...';
             btn.disabled = true;
 
+            const selectedValue = roleSelect.value;
+            const selectedRoleData = rolesMap[selectedValue];
+
             const data = new URLSearchParams({
                 nombre: document.getElementById('playerName').value,
-                rol: roleSelect.value,
-                actividad: document.getElementById('activityLog').value
+                rol: selectedValue,
+                actividad: document.getElementById('activityLog').value,
+                xp: selectedRoleData.xp
             });
 
             fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
-                mode: 'no-cors', // <-- ¡ESTA ES LA LÍNEA MÁGICA QUE ARREGLA EL ERROR!
+                mode: 'no-cors',
                 body: data
             })
             .then(response => {
-                // Mostrar éxito
-                const toast = document.getElementById("toast");
-                toast.className = "toast show";
-                setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+                // Dar la recompensa de XP al jugador
+                if(selectedRoleData) {
+                    gainXP(selectedRoleData.xp);
+                }
+
+                showMessage(`¡Misión Cumplida! +${selectedRoleData.xp} XP`);
                 
-                // Limpiar form
-                document.getElementById('playerName').value = '';
+                // Limpiar form de actividad, pero mantener el nombre para facilitar múltiples envíos
                 document.getElementById('activityLog').value = '';
                 activityLog.placeholder = 'Describe tu aporte a la comunidad hoy...';
                 roleSelect.value = '';
-                characterStatsPanel.classList.add('hidden'); // Ocultar panel de stats
+                characterStatsPanel.classList.add('hidden'); 
 
-                // Apagar selección visual
                 if(currentSelectedCard) currentSelectedCard.classList.remove('selected');
                 currentSelectedCard = null;
 
-                // Restaurar botón
                 btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> Guardar Partida';
                 btn.disabled = false;
             })
             .catch(error => {
                 console.error('Error!', error.message);
-                alert('Hubo un error al conectar con Google Sheets. Revisa la consola o la configuración de CORS.');
+                showMessage('Error al conectar con la base de datos.', true);
                 btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> Guardar Partida';
                 btn.disabled = false;
             });
